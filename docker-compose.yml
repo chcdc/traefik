@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  reverse-proxy:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.defaultRule=Host(`{{ normalize .Name }}.docker.localhost`)"
+      - "--providers.docker.exposedByDefault=false"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--ping.entryPoint=traefik"
+      - "--entryPoints.web.address=:80"
+      - "--global.checkNewVersion=true"
+      - "--providers.ProvidersThrottleDuration=5s"
+      - "--log.level=ERROR"
+      - "--log.filePath=/var/log/traefik.log"
+      - "--log.format=json"
+      - "--accessLog.filePath=/var/log/access.log"
+      - "--accessLog.format=json"
+      - "--api.insecure=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "whoami-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
